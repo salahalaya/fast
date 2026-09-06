@@ -472,7 +472,7 @@ export default function SpeedTest() {
                 What this means
               </h3>
               <span className="hidden rounded-full border border-white/10 bg-white/[0.04] px-3 py-1 text-[11px] text-zinc-500 sm:block">
-                compared to a typical 500 Mb/s connection
+                compared to a typical 50 Mb/s plan
               </span>
             </div>
             <div className="mt-1 divide-y divide-white/[0.06]">
@@ -481,7 +481,7 @@ export default function SpeedTest() {
                 value={fmtSpeed(download)}
                 unit="Mb/s"
                 tier={downTier}
-                meter={Math.min(100, (download / 500) * 100)}
+                meter={Math.min(100, (download / 50) * 100)}
                 icon={<ArrowDownIcon className="h-4 w-4 text-emerald-400" />}
               />
               <ResultRow
@@ -489,7 +489,7 @@ export default function SpeedTest() {
                 value={fmtSpeed(upload)}
                 unit="Mb/s"
                 tier={upTier}
-                meter={Math.min(100, ((upload ?? 0) / 300) * 100)}
+                meter={Math.min(100, ((upload ?? 0) / 20) * 100)}
                 icon={<ArrowUpIcon className="h-4 w-4 text-sky-400" />}
               />
               <ResultRow
@@ -503,7 +503,8 @@ export default function SpeedTest() {
             </div>
             <p className="mt-4 text-xs leading-relaxed text-zinc-500">
               These are estimates — real speed varies with Wi-Fi and your devices.
-              Longer bars = faster. For ping, a lower number means a snappier connection.
+              The bars compare with a typical 50 Mb/s plan: longer = faster.
+              For ping, a lower number means a snappier connection.
             </p>
           </div>
         </section>
