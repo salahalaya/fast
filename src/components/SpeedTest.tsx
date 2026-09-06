@@ -21,26 +21,26 @@ type Tier = {
 };
 
 const DOWN_TIERS: Tier[] = [
-  { min: 0, label: "Very slow", cap: "Fine for email and reading. Videos may keep loading.", text: "text-red-400", bar: "bg-red-500", dot: "bg-red-500" },
-  { min: 5, label: "Slow", cap: "Good for browsing and music. HD video mostly works.", text: "text-orange-400", bar: "bg-orange-500", dot: "bg-orange-500" },
-  { min: 15, label: "Good", cap: "Comfortable HD streaming and video calls.", text: "text-amber-300", bar: "bg-amber-400", dot: "bg-amber-400" },
-  { min: 50, label: "Fast", cap: "4K streaming, online games and sharp video calls.", text: "text-emerald-300", bar: "bg-emerald-400", dot: "bg-emerald-400" },
-  { min: 150, label: "Very fast", cap: "4K everywhere, serious gaming and many devices at once.", text: "text-sky-300", bar: "bg-sky-400", dot: "bg-sky-400" },
-  { min: 500, label: "Blazing", cap: "Top-tier speed that handles anything you throw at it.", text: "text-violet-300", bar: "bg-violet-400", dot: "bg-violet-400" },
+  { min: 0, label: "Très lent", cap: "Utilisable pour email et lecture. Les vidéos peuvent mettre du temps à charger.", text: "text-red-400", bar: "bg-red-500", dot: "bg-red-500" },
+  { min: 5, label: "Lent", cap: "Correct pour navigation et musique. La vidéo HD fonctionne.", text: "text-orange-400", bar: "bg-orange-500", dot: "bg-orange-500" },
+  { min: 15, label: "Bon", cap: "Streaming HD confortable et appels vidéo.", text: "text-amber-300", bar: "bg-amber-400", dot: "bg-amber-400" },
+  { min: 50, label: "Rapide", cap: "Streaming 4K, jeux en ligne et appels vidéo fluides.", text: "text-emerald-300", bar: "bg-emerald-400", dot: "bg-emerald-400" },
+  { min: 150, label: "Très rapide", cap: "4K partout, gaming intensif et nombreux appareils simultanés.", text: "text-sky-300", bar: "bg-sky-400", dot: "bg-sky-400" },
+  { min: 500, label: "Ultra rapide", cap: "Vitesse maximale pour tout ce que vous faites.", text: "text-violet-300", bar: "bg-violet-400", dot: "bg-violet-400" },
 ];
 
 const UP_TIERS: Tier[] = [
-  { min: 0, label: "Low", cap: "Fine for photos and documents.", text: "text-orange-400", bar: "bg-orange-500", dot: "bg-orange-500" },
-  { min: 5, label: "Good", cap: "Cloud backups and video calls work well.", text: "text-amber-300", bar: "bg-amber-400", dot: "bg-amber-400" },
-  { min: 20, label: "Fast", cap: "Large files upload quickly, live streaming works.", text: "text-emerald-300", bar: "bg-emerald-400", dot: "bg-emerald-400" },
-  { min: 100, label: "Very fast", cap: "Even big professional file uploads feel instant.", text: "text-sky-300", bar: "bg-sky-400", dot: "bg-sky-400" },
+  { min: 0, label: "Faible", cap: "Correct pour photos et documents.", text: "text-orange-400", bar: "bg-orange-500", dot: "bg-orange-500" },
+  { min: 5, label: "Bon", cap: "Sauvegardes cloud et appels vidéo fonctionnent bien.", text: "text-amber-300", bar: "bg-amber-400", dot: "bg-amber-400" },
+  { min: 20, label: "Rapide", cap: "Les gros fichiers s'envoient vite, le streaming en direct fonctionne.", text: "text-emerald-300", bar: "bg-emerald-400", dot: "bg-emerald-400" },
+  { min: 100, label: "Très rapide", cap: "Même les gros fichiers professionnels s'envoient instantanément.", text: "text-sky-300", bar: "bg-sky-400", dot: "bg-sky-400" },
 ];
 
 const PING_TIERS: Tier[] = [
-  { min: 0, label: "Excellent", cap: "Perfect for online gaming and calls.", text: "text-emerald-300", bar: "bg-emerald-400", dot: "bg-emerald-400" },
-  { min: 35, label: "Good", cap: "Great for streaming and most online games.", text: "text-sky-300", bar: "bg-sky-400", dot: "bg-sky-400" },
-  { min: 80, label: "Fair", cap: "Fine for video and video calls.", text: "text-amber-300", bar: "bg-amber-400", dot: "bg-amber-400" },
-  { min: 150, label: "Slow", cap: "Web pages and email still work fine.", text: "text-orange-400", bar: "bg-orange-500", dot: "bg-orange-500" },
+  { min: 0, label: "Excellent", cap: "Parfait pour les jeux en ligne et les appels.", text: "text-emerald-300", bar: "bg-emerald-400", dot: "bg-emerald-400" },
+  { min: 35, label: "Bon", cap: "Idéal pour le streaming et la plupart des jeux en ligne.", text: "text-sky-300", bar: "bg-sky-400", dot: "bg-sky-400" },
+  { min: 80, label: "Moyen", cap: "Correct pour la vidéo et les appels vidéo.", text: "text-amber-300", bar: "bg-amber-400", dot: "bg-amber-400" },
+  { min: 150, label: "Lent", cap: "Les pages web et l'email fonctionnent quand même.", text: "text-orange-400", bar: "bg-orange-500", dot: "bg-orange-500" },
 ];
 
 function pickTier(tiers: Tier[], value: number | null) {
@@ -215,7 +215,7 @@ export default function SpeedTest() {
   const [upload, setUpload] = useState<number | null>(null);
   const [ping, setPing] = useState<number | null>(null);
   const [ip, setIp] = useState<string | null>(null);
-  const [status, setStatus] = useState("Press the button to start");
+  const [status, setStatus] = useState("Appuyez sur le bouton pour commencer");
   const [progress, setProgress] = useState(0);
   const [error, setError] = useState<string | null>(null);
   const [started, setStarted] = useState(false);
@@ -232,7 +232,7 @@ export default function SpeedTest() {
 
     try {
       setPhase("latency");
-      setStatus("Measuring latency…");
+      setStatus("Mesure de la latence\u2026");
       const pingMs = await measurePing();
       setPing(pingMs);
       setProgress(0.1);
@@ -241,7 +241,7 @@ export default function SpeedTest() {
       setPhase("download");
       for (let i = 0; i < DOWNLOAD_ROUNDS.length; i++) {
         const mbytes = DOWNLOAD_ROUNDS[i];
-        setStatus(`Downloading ${mbytes} MB · ${DOWNLOAD_STREAMS} streams`);
+        setStatus(`T\u00e9l\u00e9chargement de ${mbytes} Mo \u00b7 ${DOWNLOAD_STREAMS} flux`);
         const speed = await downloadRound(mbytes, DOWNLOAD_STREAMS, (mbps) => {
           setLive(mbps);
           setProgress(0.1 + (0.45 * (i + 1)) / DOWNLOAD_ROUNDS.length);
@@ -257,7 +257,7 @@ export default function SpeedTest() {
       setLive(null);
       for (let i = 0; i < UPLOAD_ROUNDS.length; i++) {
         const mbytes = UPLOAD_ROUNDS[i];
-        setStatus(`Uploading ${mbytes} MB · ${UPLOAD_STREAMS} streams`);
+        setStatus(`Envoi de ${mbytes} Mo \u00b7 ${UPLOAD_STREAMS} flux`);
         const speed = await uploadRound(mbytes, UPLOAD_STREAMS, (mbps) => {
           setLive(mbps);
           setProgress(0.55 + (0.45 * (i + 1)) / UPLOAD_ROUNDS.length);
@@ -269,11 +269,11 @@ export default function SpeedTest() {
       setProgress(1);
       setPhase("done");
       setLive(bestDown);
-      setStatus("Test complete");
+      setStatus("Test termin\u00e9");
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Test failed. Please try again.");
+      setError(err instanceof Error ? err.message : "Le test a \u00e9chou\u00e9. Veuillez r\u00e9essayer.");
       setPhase("done");
-      setStatus("Test interrupted");
+      setStatus("Test interrompu");
     } finally {
       running.current = false;
     }
@@ -293,16 +293,16 @@ export default function SpeedTest() {
   const upTier = pickTier(UP_TIERS, upload);
   const pingTier = pickTier(PING_TIERS, ping);
   const pill = neverStarted
-    ? { label: "Ready", dot: "bg-orange-500", text: "text-orange-400" }
+    ? { label: "Pr\u00eat", dot: "bg-orange-500", text: "text-orange-400" }
     : phase === "latency"
-      ? { label: "Latency", dot: "bg-amber-400", text: "text-amber-300" }
+      ? { label: "Latence", dot: "bg-amber-400", text: "text-amber-300" }
       : phase === "download"
-        ? { label: "Download", dot: "bg-emerald-400", text: "text-emerald-300" }
+        ? { label: "T\u00e9l\u00e9chargement", dot: "bg-emerald-400", text: "text-emerald-300" }
         : phase === "upload"
-          ? { label: "Upload", dot: "bg-sky-400", text: "text-sky-300" }
+          ? { label: "Envoi", dot: "bg-sky-400", text: "text-sky-300" }
           : download !== null
             ? { label: downTier.label, dot: downTier.dot, text: downTier.text }
-            : { label: "Done", dot: "bg-emerald-400", text: "text-emerald-300" };
+            : { label: "Termin\u00e9", dot: "bg-emerald-400", text: "text-emerald-300" };
 
   return (
     <main className="relative flex min-h-dvh flex-col overflow-hidden">
@@ -318,7 +318,7 @@ export default function SpeedTest() {
             </svg>
           </div>
           <span className="text-lg font-semibold tracking-tight">
-            speed<b className="text-orange-500">test</b>
+            vitesse<b className="text-orange-500">test</b>
           </span>
         </div>
         <div className="hidden items-center gap-2 text-sm text-zinc-400 sm:flex">
@@ -326,7 +326,7 @@ export default function SpeedTest() {
             <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-emerald-400 opacity-60" />
             <span className="relative inline-flex h-2 w-2 rounded-full bg-emerald-400" />
           </span>
-          {ip ?? "connecting…"}
+          {ip ?? "connexion\u2026"}
         </div>
       </header>
 
@@ -379,7 +379,7 @@ export default function SpeedTest() {
                   ? "cursor-wait"
                   : "hover:scale-105 hover:shadow-orange-500/60 active:scale-95 focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-orange-400"
               }`}
-              aria-label={isTesting ? "Testing…" : started ? "Run the test again" : "Run the speed test"}
+              aria-label={isTesting ? "Test en cours\u2026" : started ? "Relancer le test" : "Lancer le test de vitesse"}
             >
               {isTesting ? (
                 <svg className="h-9 w-9 animate-spin" viewBox="0 0 24 24" fill="none" aria-hidden>
@@ -438,19 +438,19 @@ export default function SpeedTest() {
       <section className="mx-auto w-full max-w-5xl px-6 pb-10">
         <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
           <Stat
-            label="IP Address"
+            label="Adresse IP"
             value={ip ?? "—"}
             icon={<GlobeIcon className="h-4 w-4 text-orange-400" />}
             bar="from-orange-500 to-amber-400"
           />
           <Stat
-            label="Download"
+            label="T\u00e9l\u00e9chargement"
             value={`${fmtSpeed(download)} Mb/s`}
             icon={<ArrowDownIcon className="h-4 w-4 text-emerald-400" />}
             bar="from-emerald-500 to-teal-400"
           />
           <Stat
-            label="Upload"
+            label="Envoi"
             value={`${fmtSpeed(upload)} Mb/s`}
             icon={<ArrowUpIcon className="h-4 w-4 text-sky-400" />}
             bar="from-sky-500 to-cyan-400"
@@ -469,15 +469,15 @@ export default function SpeedTest() {
           <div className="rounded-3xl border border-white/10 bg-white/[0.03] p-5 sm:p-7">
             <div className="flex items-center justify-between gap-4">
               <h3 className="text-sm font-bold uppercase tracking-[0.18em] text-zinc-300">
-                What this means
+                Ce que cela signifie
               </h3>
               <span className="hidden rounded-full border border-white/10 bg-white/[0.04] px-3 py-1 text-[11px] text-zinc-500 sm:block">
-                compared to a typical 50 Mb/s plan
+                compar\u00e9 \u00e0 un forfait classique de 50 Mb/s
               </span>
             </div>
             <div className="mt-1 divide-y divide-white/[0.06]">
               <ResultRow
-                label="Download"
+                label="T\u00e9l\u00e9chargement"
                 value={fmtSpeed(download)}
                 unit="Mb/s"
                 tier={downTier}
@@ -485,7 +485,7 @@ export default function SpeedTest() {
                 icon={<ArrowDownIcon className="h-4 w-4 text-emerald-400" />}
               />
               <ResultRow
-                label="Upload"
+                label="Envoi"
                 value={fmtSpeed(upload)}
                 unit="Mb/s"
                 tier={upTier}
@@ -502,9 +502,9 @@ export default function SpeedTest() {
               />
             </div>
             <p className="mt-4 text-xs leading-relaxed text-zinc-500">
-              These are estimates — real speed varies with Wi-Fi and your devices.
-              The bars compare with a typical 50 Mb/s plan: longer = faster.
-              For ping, a lower number means a snappier connection.
+              Ces valeurs sont des estimations \u2014 la vitesse r\u00e9elle varie selon le Wi-Fi et vos appareils.
+              Les barres comparent avec un forfait classique de 50 Mb/s : plus long = plus rapide.
+              Pour le ping, un nombre plus bas signifie une connexion plus r\u00e9active.
             </p>
           </div>
         </section>

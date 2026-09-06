@@ -13,14 +13,14 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "speed test — Internet speed tester",
-  description: "Measure your download and upload speed fast. Simple, free, no sign-up.",
+  title: "Internet Speed Test Tunisie – Test de Vitesse Internet & Débit",
+  description: "Mesurez votre vitesse de téléchargement et d'envoi rapidement. Simple, gratuit, sans inscription.",
 };
 
 export default function RootLayout({ children }: LayoutProps<"/">) {
   return (
     <html
-      lang="en"
+      lang="fr"
       className={`${geistSans.variable} ${geistMono.variable} h-full antialiased`}
     >
       <body className="min-h-full flex flex-col bg-[#0a0a0b] text-zinc-50">{children}</body>
