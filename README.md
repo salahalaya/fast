@@ -1,27 +1,27 @@
 # ⚡ Fast — Internet Speed Test
 
-A simple, fast, beautiful internet speed test built with **Next.js** and **Tailwind CSS**. Shows your **download speed**, **upload speed**, **ping**, **public IP** and **server details** — no sign-up, no ads, no cookies.
+A simple, fast, beautiful internet speed test built with **Next.js** and **Tailwind CSS**. Shows your **download speed**, **upload speed**, **ping** and **public IP** — no sign-up, no ads, no cookies.
 
 Powered by the "big-pickle" model. Deploys straight to Vercel or any Node.js host.
 
 ## Features
 
-- **Real measurement** — streams an incompressible pseudo-random payload (compression disabled server-side so numbers aren't faked by gzip) over multiple size passes, keeping the best result
-- **Live gauge** — big animated Mbps number that updates as each pass runs, plus a progress bar
-- **Ping** — median of 6 latency probes
-- **Your IP + server** — public IP (from proxy headers), hostname, OS/arch, Node version, CPU count
-- **One-click retest**, graceful error handling, fully responsive dark UI
-- Zero third-party dependencies at runtime
+- **Accurate measurement** — parallel multi-connection transfers (like fast.com / Ookla) saturate your link, incompressible pseudo-random payloads, and compression disabled server-side so results aren't faked by gzip
+- **Live gauge** — big animated Mbps number that updates during each transfer, plus a progress ring around the start button
+- **Ping** — minimum of 6 latency probes
+- **Your IP** — client IP resolved from proxy headers
+- **Manual start** — the test only runs when you press the button; tap again to retest
+- Graceful error handling, fully responsive dark UI, zero third-party dependencies
 
 ## How the test works
 
 | Phase | Method |
 | --- | --- |
 | Ping | 6 × `GET /api/ping`, take min |
-| Download | stream `GET /api/download?size=N` with 1 / 5 / 15 MB passes, keep the highest Mbps |
-| Upload | `POST /api/upload` with 1 / 4 / 10 MB of random bytes over XHR (progress events), keep the highest Mbps |
+| Download | 2 rounds (8 / 24 MB) × **4 parallel streams**, keep the highest Mbps |
+| Upload | 2 rounds (6 / 18 MB) × **3 parallel streams** over XHR (progress events), keep the highest Mbps |
 
-`next.config.ts` sets `compress: false` so the response stream is not gzip-compressed and the measured throughput reflects the real network speed.
+`next.config.ts` sets `compress: false` so the response stream is never gzip-compressed and the measured throughput reflects the real network speed.
 
 ## Getting Started
 
@@ -30,7 +30,7 @@ npm install
 npm run dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000). The test starts automatically.
+Open [http://localhost:3000](http://localhost:3000) and press the button to start.
 
 ## Production
 
@@ -43,14 +43,14 @@ npm run start
 
 [![Deploy with Vercel](https://vercel.com/button)](https://vercel.com/new/clone?repository-url=https%3A%2F%2Fgithub.com%2Fanomalyco%2Ffast)
 
-Vercel already sets the `x-forwarded-for` header, so the real client IP and server info are shown out of the box.
+Vercel already sets the `x-forwarded-for` header, so the real client IP is shown out of the box.
 
 ## API endpoints
 
 - `GET /api/ping` — latency probe
 - `GET /api/download?size=<bytes>` — streams `size` bytes of random data
 - `POST /api/upload` — consumes the upload body and echoes bytes received
-- `GET /api/info` — client IP + server details (`hostname`, `platform`, `arch`, `node`, `cpus`, …)
+- `GET /api/info` — client IP only
 
 ## License
 

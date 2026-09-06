@@ -2,24 +2,13 @@
 
 import { useCallback, useEffect, useRef, useState } from "react";
 
-type ServerInfo = {
-  hostname: string;
-  platform: string;
-  arch: string;
-  node: string;
-  cpus: number;
-};
-
-type Info = {
-  ip: string;
-  server: ServerInfo;
-};
-
 type Phase = "idle" | "latency" | "download" | "upload" | "done";
 
 const MIB = 1 << 20;
-const DOWNLOAD_SIZES = [1, 5, 15];
-const UPLOAD_SIZES = [1, 4, 10];
+const DOWNLOAD_STREAMS = 4;
+const DOWNLOAD_ROUNDS = [8, 24];
+const UPLOAD_STREAMS = 3;
+const UPLOAD_ROUNDS = [6, 18];
 const RING = 2 * Math.PI * 42;
 
 const toMbps = (bytesPerSec: number) => (bytesPerSec * 8) / 1e6;
@@ -47,6 +36,17 @@ function randomBytes(size: number) {
   return arr;
 }
 
+function uploadBlob(size: number) {
+  const chunkSize = 512 * 1024;
+  const parts: Uint8Array[] = [];
+  let remaining = size;
+  while (remaining > 0) {
+    parts.push(randomBytes(Math.min(chunkSize, remaining)));
+    remaining -= chunkSize;
+  }
+  return new Blob(parts as BlobPart[], { type: "application/octet-stream" });
+}
+
 async function measurePing(): Promise<number> {
   let best = Infinity;
   for (let i = 0; i < 6; i++) {
@@ -61,57 +61,110 @@ async function measurePing(): Promise<number> {
   return best === Infinity ? 0 : best;
 }
 
-function downloadPass(sizeBytes: number, onLive: (mbps: number) => void): Promise<number> {
+function splitSize(total: number, streams: number) {
+  const per = Math.floor(total / streams);
+  return Array.from({ length: streams }, (_, i) =>
+    i === streams - 1 ? total - per * (streams - 1) : per
+  );
+}
+
+function downloadRound(mbytes: number, streams: number, onLive: (mbps: number) => void): Promise<number> {
   return new Promise((resolve, reject) => {
-    fetch(`/api/download?size=${sizeBytes}`, { cache: "no-store" })
-      .then(async (res) => {
+    const sizes = splitSize(mbytes * MIB, streams);
+    const t0 = performance.now();
+    let bytes = 0;
+    let finished = 0;
+    let lastUpdate = 0;
+    let errored = false;
+
+    const tick = () => {
+      const now = performance.now();
+      if (now - lastUpdate >= 100) {
+        lastUpdate = now;
+        onLive(toMbps(bytes / ((now - t0) / 1000)));
+      }
+    };
+
+    const finalize = () => {
+      const elapsed = (performance.now() - t0) / 1000;
+      const speed = toMbps(bytes / elapsed);
+      onLive(speed);
+      resolve(speed);
+    };
+
+    for (const size of sizes) {
+      (async () => {
+        const res = await fetch(`/api/download?size=${size}`, { cache: "no-store" });
         if (!res.ok || !res.body) throw new Error("Download failed");
         const reader = res.body.getReader();
-        const t0 = performance.now();
-        let bytes = 0;
-        let lastUpdate = 0;
         for (;;) {
           const { done, value } = await reader.read();
-          const now = performance.now();
           if (done) break;
           bytes += value.byteLength;
-          if (now - lastUpdate >= 80) {
-            lastUpdate = now;
-            onLive(toMbps(bytes / ((now - t0) / 1000)));
-          }
+          tick();
         }
-        const elapsed = (performance.now() - t0) / 1000;
-        onLive(toMbps(bytes / elapsed));
-        resolve(toMbps(bytes / elapsed));
-      })
-      .catch(reject);
+      })()
+        .then(() => {
+          if (++finished === streams) finalize();
+        })
+        .catch((err) => {
+          if (!errored) {
+            errored = true;
+            reject(err);
+          }
+        });
+    }
   });
 }
 
-function uploadPass(sizeBytes: number, onLive: (mbps: number) => void): Promise<number> {
+function uploadRound(mbytes: number, streams: number, onLive: (mbps: number) => void): Promise<number> {
   return new Promise((resolve, reject) => {
-    const data = randomBytes(sizeBytes);
-    const xhr = new XMLHttpRequest();
-    xhr.open("POST", "/api/upload");
-    xhr.responseType = "json";
-    const start = performance.now();
+    const sizes = splitSize(mbytes * MIB, streams);
+    const t0 = performance.now();
+    const progressByStream = new Array(streams).fill(0);
+    const receivedByStream = new Array(streams).fill(0);
+    let finished = 0;
     let lastUpdate = 0;
-    xhr.upload.onprogress = (e) => {
-      if (!e.lengthComputable) return;
+    let errored = false;
+
+    const emitLive = () => {
+      const total = progressByStream.reduce((a, b) => a + b, 0);
       const now = performance.now();
-      if (now - lastUpdate >= 80) {
+      if (now - lastUpdate >= 100) {
         lastUpdate = now;
-        onLive(toMbps(e.loaded / ((now - start) / 1000)));
+        onLive(toMbps(total / ((now - t0) / 1000)));
       }
     };
-    xhr.onload = () => {
-      const elapsed = (performance.now() - start) / 1000;
-      const received = (xhr.response as { received?: number })?.received ?? 0;
-      onLive(toMbps(received / elapsed));
-      resolve(toMbps(received / elapsed));
+
+    const finalize = () => {
+      const elapsed = (performance.now() - t0) / 1000;
+      const total = receivedByStream.reduce((a, b) => a + b, 0);
+      const speed = toMbps(total / elapsed);
+      onLive(speed);
+      resolve(speed);
     };
-    xhr.onerror = () => reject(new Error("Upload failed"));
-    xhr.send(data);
+
+    sizes.forEach((size, i) => {
+      const xhr = new XMLHttpRequest();
+      xhr.open("POST", "/api/upload");
+      xhr.responseType = "json";
+      xhr.upload.onprogress = (e) => {
+        if (!e.lengthComputable) return;
+        progressByStream[i] = e.loaded;
+        emitLive();
+      };
+      xhr.onload = () => {
+        receivedByStream[i] = (xhr.response as { received?: number })?.received ?? 0;
+        if (++finished === streams) finalize();
+      };
+      xhr.onerror = () => {
+        if (!errored) {
+          errored = true;
+          reject(new Error("Upload failed"));
+        }
+      };
+      xhr.send(uploadBlob(size));
+    });
   });
 }
 
@@ -121,7 +174,7 @@ export default function SpeedTest() {
   const [download, setDownload] = useState<number | null>(null);
   const [upload, setUpload] = useState<number | null>(null);
   const [ping, setPing] = useState<number | null>(null);
-  const [info, setInfo] = useState<Info | null>(null);
+  const [ip, setIp] = useState<string | null>(null);
   const [status, setStatus] = useState("Press the button to start");
   const [progress, setProgress] = useState(0);
   const [error, setError] = useState<string | null>(null);
@@ -142,16 +195,16 @@ export default function SpeedTest() {
       setStatus("Measuring latency…");
       const pingMs = await measurePing();
       setPing(pingMs);
-      setProgress(0.08);
+      setProgress(0.1);
 
       let bestDown = 0;
       setPhase("download");
-      for (let i = 0; i < DOWNLOAD_SIZES.length; i++) {
-        const size = DOWNLOAD_SIZES[i] * MIB;
-        setStatus(`Downloading ${DOWNLOAD_SIZES[i]} MB`);
-        const speed = await downloadPass(size, (mbps) => {
+      for (let i = 0; i < DOWNLOAD_ROUNDS.length; i++) {
+        const mbytes = DOWNLOAD_ROUNDS[i];
+        setStatus(`Downloading ${mbytes} MB · ${DOWNLOAD_STREAMS} streams`);
+        const speed = await downloadRound(mbytes, DOWNLOAD_STREAMS, (mbps) => {
           setLive(mbps);
-          setProgress(0.08 + (0.46 * (i + 1)) / DOWNLOAD_SIZES.length);
+          setProgress(0.1 + (0.45 * (i + 1)) / DOWNLOAD_ROUNDS.length);
         });
         bestDown = Math.max(bestDown, speed);
         setDownload(bestDown);
@@ -162,12 +215,12 @@ export default function SpeedTest() {
       let bestUp = 0;
       setPhase("upload");
       setLive(null);
-      for (let i = 0; i < UPLOAD_SIZES.length; i++) {
-        const size = UPLOAD_SIZES[i] * MIB;
-        setStatus(`Uploading ${UPLOAD_SIZES[i]} MB`);
-        const speed = await uploadPass(size, (mbps) => {
+      for (let i = 0; i < UPLOAD_ROUNDS.length; i++) {
+        const mbytes = UPLOAD_ROUNDS[i];
+        setStatus(`Uploading ${mbytes} MB · ${UPLOAD_STREAMS} streams`);
+        const speed = await uploadRound(mbytes, UPLOAD_STREAMS, (mbps) => {
           setLive(mbps);
-          setProgress(0.55 + (0.45 * (i + 1)) / UPLOAD_SIZES.length);
+          setProgress(0.55 + (0.45 * (i + 1)) / UPLOAD_ROUNDS.length);
         });
         bestUp = Math.max(bestUp, speed);
         setUpload(bestUp);
@@ -189,8 +242,8 @@ export default function SpeedTest() {
   useEffect(() => {
     fetch("/api/info", { cache: "no-store" })
       .then((res) => res.json())
-      .then((data: Info) => setInfo(data))
-      .catch(() => setInfo(null));
+      .then((data: { ip?: string }) => setIp(data.ip ?? "—"))
+      .catch(() => setIp("—"));
   }, []);
 
   const isTesting = phase === "latency" || phase === "download" || phase === "upload";
@@ -228,8 +281,7 @@ export default function SpeedTest() {
             <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-emerald-400 opacity-60" />
             <span className="relative inline-flex h-2 w-2 rounded-full bg-emerald-400" />
           </span>
-          {info?.server.hostname ?? "connecting…"}
-          {info ? ` · ${info.server.platform}/${info.server.arch}` : ""}
+          {ip ?? "connecting…"}
         </div>
       </header>
 
@@ -333,10 +385,10 @@ export default function SpeedTest() {
       </section>
 
       <section className="mx-auto w-full max-w-5xl px-6 pb-10">
-        <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-6">
+        <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
           <Stat
             label="IP Address"
-            value={info?.ip ?? "—"}
+            value={ip ?? "—"}
             icon={<GlobeIcon className="h-4 w-4 text-orange-400" />}
             bar="from-orange-500 to-amber-400"
           />
@@ -358,24 +410,10 @@ export default function SpeedTest() {
             icon={<SignalIcon className="h-4 w-4 text-violet-400" />}
             bar="from-violet-500 to-purple-400"
           />
-          <Stat
-            label="Server"
-            value={info?.server.hostname ?? "—"}
-            sub={info?.server.platform ?? ""}
-            icon={<ServerIcon className="h-4 w-4 text-zinc-300" />}
-            bar="from-zinc-500 to-zinc-400"
-          />
-          <Stat
-            label="Runtime"
-            value={info?.server.node ?? "—"}
-            sub={`${info?.server.cpus ?? ""}-core CPU`}
-            icon={<ChipIcon className="h-4 w-4 text-zinc-300" />}
-            bar="from-zinc-500 to-zinc-400"
-          />
         </div>
         <p className="mt-6 text-center text-xs text-zinc-600">
-          Results are estimates and vary with network conditions. Server: {info?.server.hostname ?? "—"} · Node {info?.server.node ?? "—"}{" "}
-          · {info ? `${info.server.platform}/${info.server.arch}` : ""}
+          Results are estimates and vary with network conditions. Multi-connection ·
+          no compression.
         </p>
       </section>
     </main>
@@ -470,33 +508,6 @@ function GlobeIcon({ className }: { className?: string }) {
       <circle cx="12" cy="12" r="9" />
       <path d="M3 12h18" />
       <path d="M12 3a14 14 0 0 1 0 18 14 14 0 0 1 0-18Z" />
-    </svg>
-  );
-}
-
-function ServerIcon({ className }: { className?: string }) {
-  return (
-    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" className={className} aria-hidden>
-      <rect x="3" y="4" width="18" height="7" rx="2" />
-      <rect x="3" y="13" width="18" height="7" rx="2" />
-      <path d="M7 7.5h.01" />
-      <path d="M7 16.5h.01" />
-    </svg>
-  );
-}
-
-function ChipIcon({ className }: { className?: string }) {
-  return (
-    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" className={className} aria-hidden>
-      <rect x="6" y="6" width="12" height="12" rx="2" />
-      <path d="M9 2v3" />
-      <path d="M15 2v3" />
-      <path d="M9 19v3" />
-      <path d="M15 19v3" />
-      <path d="M2 9h3" />
-      <path d="M2 15h3" />
-      <path d="M19 9h3" />
-      <path d="M19 15h3" />
     </svg>
   );
 }
