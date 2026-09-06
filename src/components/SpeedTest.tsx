@@ -38,9 +38,9 @@ const UP_TIERS: Tier[] = [
 
 const PING_TIERS: Tier[] = [
   { min: 0, label: "Excellent", cap: "Parfait pour les jeux en ligne et les appels.", text: "text-emerald-300", bar: "bg-emerald-400", dot: "bg-emerald-400" },
-  { min: 35, label: "Bon", cap: "Id\u00e9al pour le streaming et la plupart des jeux en ligne.", text: "text-sky-300", bar: "bg-sky-400", dot: "bg-sky-400" },
-  { min: 80, label: "Moyen", cap: "Correct pour la vid\u00e9o et les appels vid\u00e9o.", text: "text-amber-300", bar: "bg-amber-400", dot: "bg-amber-400" },
-  { min: 150, label: "Lent", cap: "Les pages web et l'email fonctionnent quand m\u00eame.", text: "text-orange-400", bar: "bg-orange-500", dot: "bg-orange-500" },
+  { min: 35, label: "Bon", cap: "Idéal pour le streaming et la plupart des jeux en ligne.", text: "text-sky-300", bar: "bg-sky-400", dot: "bg-sky-400" },
+  { min: 80, label: "Moyen", cap: "Correct pour la vidéo et les appels vidéo.", text: "text-amber-300", bar: "bg-amber-400", dot: "bg-amber-400" },
+  { min: 150, label: "Lent", cap: "Les pages web et l'email fonctionnent quand même.", text: "text-orange-400", bar: "bg-orange-500", dot: "bg-orange-500" },
 ];
 
 const FAQ = [
@@ -255,7 +255,7 @@ export default function SpeedTest() {
 
     try {
       setPhase("latency");
-      setStatus("Mesure de la latence\u2026");
+      setStatus("Mesure de la latence…");
       const pingMs = await measurePing();
       setPing(pingMs);
       setProgress(0.1);
@@ -264,7 +264,7 @@ export default function SpeedTest() {
       setPhase("download");
       for (let i = 0; i < DOWNLOAD_ROUNDS.length; i++) {
         const mbytes = DOWNLOAD_ROUNDS[i];
-        setStatus(`T\u00e9l\u00e9chargement de ${mbytes} Mo \u00b7 ${DOWNLOAD_STREAMS} flux`);
+        setStatus(`Téléchargement de ${mbytes} Mo · ${DOWNLOAD_STREAMS} flux`);
         const speed = await downloadRound(mbytes, DOWNLOAD_STREAMS, (mbps) => {
           setLive(mbps);
           setProgress(0.1 + (0.45 * (i + 1)) / DOWNLOAD_ROUNDS.length);
@@ -280,7 +280,7 @@ export default function SpeedTest() {
       setLive(null);
       for (let i = 0; i < UPLOAD_ROUNDS.length; i++) {
         const mbytes = UPLOAD_ROUNDS[i];
-        setStatus(`Envoi de ${mbytes} Mo \u00b7 ${UPLOAD_STREAMS} flux`);
+        setStatus(`Envoi de ${mbytes} Mo · ${UPLOAD_STREAMS} flux`);
         const speed = await uploadRound(mbytes, UPLOAD_STREAMS, (mbps) => {
           setLive(mbps);
           setProgress(0.55 + (0.45 * (i + 1)) / UPLOAD_ROUNDS.length);
@@ -292,9 +292,9 @@ export default function SpeedTest() {
       setProgress(1);
       setPhase("done");
       setLive(bestDown);
-      setStatus("Test termin\u00e9");
+      setStatus("Test terminé");
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Le test a \u00e9chou\u00e9. Veuillez r\u00e9essayer.");
+      setError(err instanceof Error ? err.message : "Le test a échoué. Veuillez réessayer.");
       setPhase("done");
       setStatus("Test interrompu");
     } finally {
@@ -316,16 +316,16 @@ export default function SpeedTest() {
   const upTier = pickTier(UP_TIERS, upload);
   const pingTier = pickTier(PING_TIERS, ping);
   const pill = neverStarted
-    ? { label: "Pr\u00eat", dot: "bg-orange-500", text: "text-orange-400" }
+    ? { label: "Prêt", dot: "bg-orange-500", text: "text-orange-400" }
     : phase === "latency"
       ? { label: "Latence", dot: "bg-amber-400", text: "text-amber-300" }
       : phase === "download"
-        ? { label: "T\u00e9l\u00e9chargement", dot: "bg-emerald-400", text: "text-emerald-300" }
+        ? { label: "Téléchargement", dot: "bg-emerald-400", text: "text-emerald-300" }
         : phase === "upload"
           ? { label: "Envoi", dot: "bg-sky-400", text: "text-sky-300" }
           : download !== null
             ? { label: downTier.label, dot: downTier.dot, text: downTier.text }
-            : { label: "Termin\u00e9", dot: "bg-emerald-400", text: "text-emerald-300" };
+            : { label: "Terminé", dot: "bg-emerald-400", text: "text-emerald-300" };
 
   return (
     <main className="relative flex min-h-dvh flex-col overflow-hidden">
@@ -349,7 +349,7 @@ export default function SpeedTest() {
             <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-emerald-400 opacity-60" />
             <span className="relative inline-flex h-2 w-2 rounded-full bg-emerald-400" />
           </span>
-          {ip ?? "connexion\u2026"}
+          {ip ?? "connexion…"}
         </div>
       </header>
 
@@ -409,7 +409,7 @@ export default function SpeedTest() {
                   ? "cursor-wait"
                   : "hover:scale-105 hover:shadow-orange-500/60 active:scale-95 focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-orange-400"
               }`}
-              aria-label={isTesting ? "Test en cours\u2026" : started ? "Relancer le test" : "Lancer le test de vitesse"}
+              aria-label={isTesting ? "Test en cours…" : started ? "Relancer le test" : "Lancer le test de vitesse"}
             >
               {isTesting ? (
                 <svg className="h-9 w-9 animate-spin" viewBox="0 0 24 24" fill="none" aria-hidden>
@@ -483,7 +483,7 @@ export default function SpeedTest() {
             bar="from-orange-500 to-amber-400"
           />
           <Stat
-            label="T\u00e9l\u00e9chargement"
+            label="Téléchargement"
             value={`${fmtSpeed(download)} Mb/s`}
             icon={<ArrowDownIcon className="h-4 w-4 text-emerald-400" />}
             bar="from-emerald-500 to-teal-400"
@@ -511,12 +511,12 @@ export default function SpeedTest() {
                 Ce que cela signifie
               </h3>
               <span className="hidden rounded-full border border-white/10 bg-white/[0.04] px-3 py-1 text-[11px] text-zinc-500 sm:block">
-                compar\u00e9 \u00e0 un forfait classique de 50 Mb/s
+                comparé à un forfait classique de 50 Mb/s
               </span>
             </div>
             <div className="mt-1 divide-y divide-white/[0.06]">
               <ResultRow
-                label="T\u00e9l\u00e9chargement"
+                label="Téléchargement"
                 value={fmtSpeed(download)}
                 unit="Mb/s"
                 tier={downTier}
@@ -541,9 +541,9 @@ export default function SpeedTest() {
               />
             </div>
             <p className="mt-4 text-xs leading-relaxed text-zinc-500">
-              Ces valeurs sont des estimations \u2014 la vitesse r\u00e9elle varie selon le Wi-Fi et vos appareils.
+              Ces valeurs sont des estimations — la vitesse réelle varie selon le Wi-Fi et vos appareils.
               Les barres comparent avec un forfait classique de 50 Mb/s : plus long = plus rapide.
-              Pour le ping, un nombre plus bas signifie une connexion plus r\u00e9active.
+              Pour le ping, un nombre plus bas signifie une connexion plus réactive.
             </p>
           </div>
         </section>
@@ -552,7 +552,7 @@ export default function SpeedTest() {
       <section className="mx-auto w-full max-w-3xl px-6 pb-10">
         <div className="rounded-3xl border border-white/10 bg-white/[0.03] p-5 sm:p-8">
           <h2 className="text-lg font-bold tracking-tight text-zinc-100 sm:text-2xl">
-            Questions fr\u00e9quentes sur le test de vitesse internet Tunisie
+            Questions fréquentes sur le test de vitesse internet Tunisie
           </h2>
           <div className="mt-3 divide-y divide-white/[0.06]">
             {FAQ.map((item) => (
@@ -573,10 +573,10 @@ export default function SpeedTest() {
       <footer className="border-t border-white/[0.06] px-6 py-8">
         <div className="mx-auto flex w-full max-w-5xl flex-col items-center justify-between gap-2 text-center text-xs text-zinc-500 sm:flex-row sm:text-left">
           <p>
-            \u00a9 {new Date().getFullYear()} Internet Speed Test Tunisie \u2013 test de vitesse
+            © {new Date().getFullYear()} Internet Speed Test Tunisie – test de vitesse
             internet gratuit.
           </p>
-          <p>Fibre \u00b7 ADSL \u00b7 4G \u00b7 4G+ \u00b7 5G \u00b7 Wi-Fi</p>
+          <p>Fibre · ADSL · 4G · 4G+ · 5G · Wi-Fi</p>
         </div>
       </footer>
     </main>
