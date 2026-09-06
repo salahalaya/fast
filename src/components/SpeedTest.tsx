@@ -11,6 +11,46 @@ const UPLOAD_STREAMS = 3;
 const UPLOAD_ROUNDS = [6, 18];
 const RING = 2 * Math.PI * 42;
 
+type Tier = {
+  min: number;
+  label: string;
+  cap: string;
+  text: string;
+  bar: string;
+  dot: string;
+};
+
+const DOWN_TIERS: Tier[] = [
+  { min: 0, label: "Very slow", cap: "Fine for email and reading. Videos may keep loading.", text: "text-red-400", bar: "bg-red-500", dot: "bg-red-500" },
+  { min: 5, label: "Slow", cap: "Good for browsing and music. HD video mostly works.", text: "text-orange-400", bar: "bg-orange-500", dot: "bg-orange-500" },
+  { min: 15, label: "Good", cap: "Comfortable HD streaming and video calls.", text: "text-amber-300", bar: "bg-amber-400", dot: "bg-amber-400" },
+  { min: 50, label: "Fast", cap: "4K streaming, online games and sharp video calls.", text: "text-emerald-300", bar: "bg-emerald-400", dot: "bg-emerald-400" },
+  { min: 150, label: "Very fast", cap: "4K everywhere, serious gaming and many devices at once.", text: "text-sky-300", bar: "bg-sky-400", dot: "bg-sky-400" },
+  { min: 500, label: "Blazing", cap: "Top-tier speed that handles anything you throw at it.", text: "text-violet-300", bar: "bg-violet-400", dot: "bg-violet-400" },
+];
+
+const UP_TIERS: Tier[] = [
+  { min: 0, label: "Low", cap: "Fine for photos and documents.", text: "text-orange-400", bar: "bg-orange-500", dot: "bg-orange-500" },
+  { min: 5, label: "Good", cap: "Cloud backups and video calls work well.", text: "text-amber-300", bar: "bg-amber-400", dot: "bg-amber-400" },
+  { min: 20, label: "Fast", cap: "Large files upload quickly, live streaming works.", text: "text-emerald-300", bar: "bg-emerald-400", dot: "bg-emerald-400" },
+  { min: 100, label: "Very fast", cap: "Even big professional file uploads feel instant.", text: "text-sky-300", bar: "bg-sky-400", dot: "bg-sky-400" },
+];
+
+const PING_TIERS: Tier[] = [
+  { min: 0, label: "Excellent", cap: "Perfect for online gaming and calls.", text: "text-emerald-300", bar: "bg-emerald-400", dot: "bg-emerald-400" },
+  { min: 35, label: "Good", cap: "Great for streaming and most online games.", text: "text-sky-300", bar: "bg-sky-400", dot: "bg-sky-400" },
+  { min: 80, label: "Fair", cap: "Fine for video and video calls.", text: "text-amber-300", bar: "bg-amber-400", dot: "bg-amber-400" },
+  { min: 150, label: "Slow", cap: "Web pages and email still work fine.", text: "text-orange-400", bar: "bg-orange-500", dot: "bg-orange-500" },
+];
+
+function pickTier(tiers: Tier[], value: number | null) {
+  let tier = tiers[0];
+  if (value !== null && isFinite(value)) {
+    for (const t of tiers) if (value >= t.min) tier = t;
+  }
+  return tier;
+}
+
 const toMbps = (bytesPerSec: number) => (bytesPerSec * 8) / 1e6;
 
 function fmtSpeed(mbps: number | null) {
@@ -249,6 +289,9 @@ export default function SpeedTest() {
   const isTesting = phase === "latency" || phase === "download" || phase === "upload";
   const neverStarted = !started && !isTesting;
   const heroSpeed = phase === "upload" ? live : phase === "download" ? live : download;
+  const downTier = pickTier(DOWN_TIERS, download);
+  const upTier = pickTier(UP_TIERS, upload);
+  const pingTier = pickTier(PING_TIERS, ping);
   const pill = neverStarted
     ? { label: "Ready", dot: "bg-orange-500", text: "text-orange-400" }
     : phase === "latency"
@@ -257,7 +300,9 @@ export default function SpeedTest() {
         ? { label: "Download", dot: "bg-emerald-400", text: "text-emerald-300" }
         : phase === "upload"
           ? { label: "Upload", dot: "bg-sky-400", text: "text-sky-300" }
-          : { label: "Done", dot: "bg-emerald-400", text: "text-emerald-300" };
+          : download !== null
+            ? { label: downTier.label, dot: downTier.dot, text: downTier.text }
+            : { label: "Done", dot: "bg-emerald-400", text: "text-emerald-300" };
 
   return (
     <main className="relative flex min-h-dvh flex-col overflow-hidden">
@@ -313,7 +358,13 @@ export default function SpeedTest() {
           </div>
 
           <p className="mt-3 flex h-6 items-center text-sm font-medium text-zinc-500">
-            <StatusMessage phase={phase} status={status} error={error} />
+            {error ? (
+              <span className="text-red-400">{error}</span>
+            ) : download !== null && phase === "done" ? (
+              <span className="normal-case tracking-normal text-zinc-300">{downTier.cap}</span>
+            ) : (
+              <span className="uppercase tracking-[0.25em]">{status}</span>
+            )}
           </p>
 
           <div className="relative mt-10 h-24 w-24 sm:h-28 sm:w-28">
@@ -411,26 +462,99 @@ export default function SpeedTest() {
             bar="from-violet-500 to-purple-400"
           />
         </div>
-        <p className="mt-6 text-center text-xs text-zinc-600">
-          Results are estimates and vary with network conditions. Multi-connection ·
-          no compression.
-        </p>
       </section>
+
+      {download !== null && (
+        <section className="mx-auto w-full max-w-2xl animate-[fade-up_0.4s_ease] px-6 pb-12">
+          <div className="rounded-3xl border border-white/10 bg-white/[0.03] p-5 sm:p-7">
+            <div className="flex items-center justify-between gap-4">
+              <h3 className="text-sm font-bold uppercase tracking-[0.18em] text-zinc-300">
+                What this means
+              </h3>
+              <span className="hidden rounded-full border border-white/10 bg-white/[0.04] px-3 py-1 text-[11px] text-zinc-500 sm:block">
+                compared to a typical 500 Mb/s connection
+              </span>
+            </div>
+            <div className="mt-1 divide-y divide-white/[0.06]">
+              <ResultRow
+                label="Download"
+                value={fmtSpeed(download)}
+                unit="Mb/s"
+                tier={downTier}
+                meter={Math.min(100, (download / 500) * 100)}
+                icon={<ArrowDownIcon className="h-4 w-4 text-emerald-400" />}
+              />
+              <ResultRow
+                label="Upload"
+                value={fmtSpeed(upload)}
+                unit="Mb/s"
+                tier={upTier}
+                meter={Math.min(100, ((upload ?? 0) / 300) * 100)}
+                icon={<ArrowUpIcon className="h-4 w-4 text-sky-400" />}
+              />
+              <ResultRow
+                label="Ping"
+                value={fmtPing(ping)}
+                unit="ms"
+                tier={pingTier}
+                meter={Math.max(6, 100 - ((ping ?? 300) / 200) * 100)}
+                icon={<SignalIcon className="h-4 w-4 text-violet-400" />}
+              />
+            </div>
+            <p className="mt-4 text-xs leading-relaxed text-zinc-500">
+              These are estimates — real speed varies with Wi-Fi and your devices.
+              Longer bars = faster. For ping, a lower number means a snappier connection.
+            </p>
+          </div>
+        </section>
+      )}
     </main>
   );
 }
 
-function StatusMessage({
-  phase,
-  status,
-  error,
+function ResultRow({
+  label,
+  value,
+  unit,
+  tier,
+  meter,
+  icon,
 }: {
-  phase: Phase;
-  status: string;
-  error: string | null;
+  label: string;
+  value: string;
+  unit: string;
+  tier: Tier;
+  meter: number;
+  icon: React.ReactNode;
 }) {
-  if (phase === "done" && error) return <span className="text-red-400">{error}</span>;
-  return <span className="uppercase tracking-[0.25em]">{status}</span>;
+  return (
+    <div className="flex items-center gap-4 py-4">
+      <div className="grid h-10 w-10 shrink-0 place-items-center rounded-xl bg-white/[0.05]">
+        {icon}
+      </div>
+      <div className="min-w-0 flex-1">
+        <div className="flex flex-wrap items-center gap-2">
+          <span className="text-sm font-semibold text-zinc-300">{label}</span>
+          <span
+            className={`rounded-full border border-white/10 bg-white/[0.04] px-2 py-0.5 text-[11px] font-bold ${tier.text}`}
+          >
+            {tier.label}
+          </span>
+        </div>
+        <p className="mt-1 text-xs text-zinc-500">{tier.cap}</p>
+        <div className="mt-2 h-1.5 w-full overflow-hidden rounded-full bg-white/10">
+          <div
+            className={`h-full rounded-full ${tier.bar} transition-[width] duration-1000 ease-out`}
+            style={{ width: `${meter}%` }}
+          />
+        </div>
+      </div>
+      <div className="min-w-0 text-right">
+        <div className="text-lg font-bold tabular-nums text-zinc-50">{value}</div>
+        <div className="text-[11px] font-medium uppercase tracking-wider text-zinc-500">{unit}</div>
+      </div>
+    </div>
+  );
 }
 
 function Stat({
