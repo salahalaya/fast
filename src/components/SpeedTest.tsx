@@ -38,9 +38,32 @@ const UP_TIERS: Tier[] = [
 
 const PING_TIERS: Tier[] = [
   { min: 0, label: "Excellent", cap: "Parfait pour les jeux en ligne et les appels.", text: "text-emerald-300", bar: "bg-emerald-400", dot: "bg-emerald-400" },
-  { min: 35, label: "Bon", cap: "Idéal pour le streaming et la plupart des jeux en ligne.", text: "text-sky-300", bar: "bg-sky-400", dot: "bg-sky-400" },
-  { min: 80, label: "Moyen", cap: "Correct pour la vidéo et les appels vidéo.", text: "text-amber-300", bar: "bg-amber-400", dot: "bg-amber-400" },
-  { min: 150, label: "Lent", cap: "Les pages web et l'email fonctionnent quand même.", text: "text-orange-400", bar: "bg-orange-500", dot: "bg-orange-500" },
+  { min: 35, label: "Bon", cap: "Id\u00e9al pour le streaming et la plupart des jeux en ligne.", text: "text-sky-300", bar: "bg-sky-400", dot: "bg-sky-400" },
+  { min: 80, label: "Moyen", cap: "Correct pour la vid\u00e9o et les appels vid\u00e9o.", text: "text-amber-300", bar: "bg-amber-400", dot: "bg-amber-400" },
+  { min: 150, label: "Lent", cap: "Les pages web et l'email fonctionnent quand m\u00eame.", text: "text-orange-400", bar: "bg-orange-500", dot: "bg-orange-500" },
+];
+
+const FAQ = [
+  {
+    q: "Comment tester la vitesse de ma connexion internet en Tunisie ?",
+    a: "Cliquez simplement sur le bouton orange « Démarrer ». Le test mesure automatiquement votre débit de téléchargement, votre débit d'envoi et votre ping (latence) en moins d'une minute, sans inscription ni installation.",
+  },
+  {
+    q: "Quelle vitesse internet moyenne en Tunisie ?",
+    a: "Les débits varient selon votre opérateur (Orange Tunisie, Ooredoo ou Tunisie Telecom) et la technologie utilisée : fibre, ADSL, 4G, 4G+ ou 5G. Une ligne fibre peut dépasser plusieurs centaines de Mb/s selon votre forfait.",
+  },
+  {
+    q: "Qu'est-ce que le ping ou la latence ?",
+    a: "Le ping, ou latence, mesure le temps en millisecondes que met un paquet de données pour aller et revenir du serveur. Plus il est bas, plus votre connexion est réactive, ce qui est crucial pour les jeux en ligne et les appels vidéo.",
+  },
+  {
+    q: "Pourquoi ma vitesse Wi-Fi est-elle plus lente que ma vitesse filaire ?",
+    a: "Le Wi-Fi partage la bande passante et subit la distance, les murs et les interférences. Pour mesurer la vitesse réelle de votre ligne, testez en câble Ethernet (RJ45) directement branché sur la box.",
+  },
+  {
+    q: "Ce test de vitesse est-il gratuit et sans inscription ?",
+    a: "Oui, notre test de vitesse internet en Tunisie est 100 % gratuit, illimité et ne demande aucune inscription ni installation de logiciel.",
+  },
 ];
 
 function pickTier(tiers: Tier[], value: number | null) {
@@ -332,6 +355,13 @@ export default function SpeedTest() {
 
       <section className="mx-auto flex w-full max-w-5xl flex-1 flex-col items-center justify-center px-6 pb-8">
         <div className="flex flex-col items-center text-center">
+          <h1 className="mb-6 max-w-3xl text-3xl font-extrabold tracking-tight text-zinc-50 sm:text-5xl">
+            Test de vitesse Internet{" "}
+            <span className="bg-gradient-to-r from-orange-400 to-amber-300 bg-clip-text text-transparent">
+              Tunisie
+            </span>
+          </h1>
+
           <div
             className={`mb-4 flex items-center gap-2 rounded-full border border-white/10 bg-white/[0.04] px-4 py-1.5 text-xs font-semibold uppercase tracking-[0.22em] ${pill.text}`}
           >
@@ -432,6 +462,15 @@ export default function SpeedTest() {
               {fmtPing(ping)} ms
             </span>
           </div>
+
+          <p className="mt-8 max-w-2xl text-sm leading-relaxed text-zinc-400 sm:text-base">
+            Notre test de vitesse internet en Tunisie mesure gratuitement votre{" "}
+            <strong className="font-semibold text-zinc-200">débit de téléchargement</strong>, votre{" "}
+            <strong className="font-semibold text-zinc-200">débit d&apos;envoi</strong> et votre{" "}
+            <strong className="font-semibold text-zinc-200">ping</strong>. Compatible fibre TT, ADSL,
+            4G, 4G+ et 5G chez Orange Tunisie, Ooredoo et Tunisie Telecom — en quelques secondes, sans
+            inscription ni installation.
+          </p>
         </div>
       </section>
 
@@ -509,6 +548,37 @@ export default function SpeedTest() {
           </div>
         </section>
       )}
+
+      <section className="mx-auto w-full max-w-3xl px-6 pb-10">
+        <div className="rounded-3xl border border-white/10 bg-white/[0.03] p-5 sm:p-8">
+          <h2 className="text-lg font-bold tracking-tight text-zinc-100 sm:text-2xl">
+            Questions fr\u00e9quentes sur le test de vitesse internet Tunisie
+          </h2>
+          <div className="mt-3 divide-y divide-white/[0.06]">
+            {FAQ.map((item) => (
+              <details key={item.q} className="group py-4">
+                <summary className="flex cursor-pointer list-none items-center justify-between gap-4 text-sm font-semibold text-zinc-200">
+                  {item.q}
+                  <span className="text-lg leading-none text-zinc-500 transition-transform duration-200 group-open:rotate-45">
+                    +
+                  </span>
+                </summary>
+                <p className="mt-2 text-sm leading-relaxed text-zinc-400">{item.a}</p>
+              </details>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      <footer className="border-t border-white/[0.06] px-6 py-8">
+        <div className="mx-auto flex w-full max-w-5xl flex-col items-center justify-between gap-2 text-center text-xs text-zinc-500 sm:flex-row sm:text-left">
+          <p>
+            \u00a9 {new Date().getFullYear()} Internet Speed Test Tunisie \u2013 test de vitesse
+            internet gratuit.
+          </p>
+          <p>Fibre \u00b7 ADSL \u00b7 4G \u00b7 4G+ \u00b7 5G \u00b7 Wi-Fi</p>
+        </div>
+      </footer>
     </main>
   );
 }
